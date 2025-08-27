@@ -51,6 +51,7 @@ coverage.xml
 # Environment Variables
 # ==============================================================================
 .env
+.env.test
 .env.local
 .env.development.local
 .env.test.local
