@@ -1,0 +1,47 @@
+name: 'Dogecloud Deploy'
+description: 'Deploy files to Dogecloud CDN with concurrent uploads'
+author: 'Your Name'
+inputs:
+  api-key:
+    description: 'Dogecloud API Key'
+    required: true
+  secret-key:
+    description: 'Dogecloud Secret Key'
+    required: true
+  bucket-name:
+    description: 'Dogecloud bucket name'
+    required: true
+  local-path:
+    description: 'Local path to upload (default: ./dist)'
+    required: false
+    default: './dist'
+  remote-path:
+    description: 'Remote path in bucket (default: /)'
+    required: false
+    default: '/'
+  delete-removed:
+    description: 'Delete files that are not in local directory'
+    required: false
+    default: 'false'
+  max-concurrency:
+    description: 'Maximum number of concurrent uploads (default: 5)'
+    required: false
+    default: '5'
+  retry-attempts:
+    description: 'Number of retry attempts for failed uploads (default: 3)'
+    required: false
+    default: '3'
+outputs:
+  uploaded-files:
+    description: 'Number of files uploaded'
+  deployment-url:
+    description: 'Deployment URL'
+  total-size:
+    description: 'Total size of uploaded files in bytes'
+  duration:
+    description: 'Deployment duration in milliseconds'
+  failed-files:
+    description: 'Comma-separated list of failed file operations'
+runs:
+  using: 'node22'
+  main: 'dist/index.js'
