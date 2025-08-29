@@ -52,7 +52,8 @@ export class DogeCloud {
       new PutObjectCommand({
         Bucket: this.tmpToken?.Buckets[0].s3Bucket!,
         Key: key,
-        Body: file
+        Body: file,
+        ChecksumAlgorithm: undefined
       })
     )
 
