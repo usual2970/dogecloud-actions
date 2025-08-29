@@ -29,4 +29,3 @@ export declare class DogeCloud {
     private dogecloudApi;
 }
 export {};
-//# sourceMappingURL=dogecloud.d.ts.map

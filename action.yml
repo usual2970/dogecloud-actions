@@ -1,22 +1,22 @@
-name: 'Dogecloud Deploy'
-description: 'Deploy files to Dogecloud CDN with concurrent uploads'
+name: 'DogeCloud Deploy'
+description: 'Deploy files to DogeCloud CDN with concurrent uploads'
 author: 'Your Name'
 inputs:
   api-key:
-    description: 'Dogecloud API Key'
+    description: 'DogeCloud API Key'
     required: true
   secret-key:
-    description: 'Dogecloud Secret Key'
+    description: 'DogeCloud Secret Key'
     required: true
   bucket-name:
-    description: 'Dogecloud bucket name'
+    description: 'DogeCloud bucket name'
     required: true
   local-path:
-    description: 'Local path to upload (default: ./dist)'
+    description: 'Local path to upload'
     required: false
     default: './dist'
   remote-path:
-    description: 'Remote path in bucket (default: /)'
+    description: 'Remote path in bucket'
     required: false
     default: '/'
   delete-removed:
@@ -24,11 +24,11 @@ inputs:
     required: false
     default: 'false'
   max-concurrency:
-    description: 'Maximum number of concurrent uploads (default: 5)'
+    description: 'Maximum number of concurrent uploads'
     required: false
     default: '5'
   retry-attempts:
-    description: 'Number of retry attempts for failed uploads (default: 3)'
+    description: 'Number of retry attempts for failed uploads'
     required: false
     default: '3'
 outputs:
@@ -44,4 +44,7 @@ outputs:
     description: 'Comma-separated list of failed file operations'
 runs:
   using: 'node20'
-  main: 'lib/main.js'
+  main: 'dist/main.js'
+branding:
+  icon: 'upload-cloud'
+  color: 'blue'

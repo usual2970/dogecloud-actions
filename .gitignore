@@ -9,18 +9,19 @@ lerna-debug.log*
 .pnpm-debug.log*
 
 # ==============================================================================
-# Build Output
-# ===============================================================================
-dist/
+# Build Output (GitHub Actions needs dist/ to be committed)
+# ==============================================================================
+# dist/  # 注释掉这行，因为 GitHub Actions 需要 dist/ 目录
 build/
 out/
+lib/  # 移除 lib/ 目录，因为我们使用 dist/
 *.tsbuildinfo
 
 # ==============================================================================
-# GitHub Actions
+# GitHub Actions Distribution (MUST BE COMMITTED)
 # ==============================================================================
-# Keep action.yml and workflow files, but ignore any generated action files
-# (The dist/ folder should be committed for GitHub Actions, but we'll exclude it from development)
+# The dist/ folder contains the packaged action and MUST be committed
+# for GitHub Actions to work properly
 
 # ==============================================================================
 # TypeScript
