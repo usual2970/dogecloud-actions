@@ -17,11 +17,12 @@ describe('DogeCloud', () => {
   let dogeCloud: DogeCloud
   const mockAccessKey = 'test-access-key'
   const mockSecretKey = 'test-secret-key'
+  const mockBucket = 'test-bucket'
 
   beforeEach(() => {
     // Clear all mocks before each test
     jest.clearAllMocks()
-    dogeCloud = new DogeCloud(mockAccessKey, mockSecretKey)
+    dogeCloud = new DogeCloud(mockAccessKey, mockSecretKey, mockBucket)
   })
 
   describe('constructor', () => {

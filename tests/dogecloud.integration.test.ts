@@ -18,7 +18,8 @@ import { tmpdir } from 'os'
 // 检查环境变量
 const accessKey = process.env.DOGECLOUD_ACCESS_KEY
 const secretKey = process.env.DOGECLOUD_SECRET_KEY
-const hasCredentials = !!(accessKey && secretKey)
+const bucket = process.env.DOGECLOUD_BUCKET
+const hasCredentials = !!(accessKey && secretKey && bucket)
 
 if (!hasCredentials) {
   console.warn(
@@ -41,7 +42,7 @@ describeIf(hasCredentials)('DogeCloud Integration Tests', () => {
     new Date().toISOString()
 
   beforeAll(() => {
-    dogeCloud = new DogeCloud(accessKey!, secretKey!)
+    dogeCloud = new DogeCloud(accessKey!, secretKey!, bucket!)
 
     // 创建测试文件
     writeFileSync(testFilePath, testFileContent, 'utf8')
@@ -144,7 +145,11 @@ describeIf(hasCredentials)('DogeCloud Integration Tests', () => {
 
   describe('Error Handling Tests', () => {
     it('should handle invalid credentials gracefully', async () => {
-      const invalidDogeCloud = new DogeCloud('invalid-key', 'invalid-secret')
+      const invalidDogeCloud = new DogeCloud(
+        'invalid-key',
+        'invalid-secret',
+        'invalid-bucket'
+      )
 
       await expect(invalidDogeCloud.getTmpToken()).rejects.toMatchObject({
         errno: expect.any(Number),

@@ -1,7 +1,12 @@
 import axios, { AxiosResponse } from 'axios'
 import * as crypto from 'crypto'
 import * as querystring from 'querystring'
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command
+} from '@aws-sdk/client-s3'
 import { ReadStream } from 'fs'
 
 type DogeCloudApiResponse<T = any> = {
@@ -36,7 +41,8 @@ export class DogeCloud {
 
   constructor(
     private accessKey: string,
-    private secretKey: string
+    private secretKey: string,
+    private bucket: string
   ) {}
 
   async uploadFile(key: string, file: ReadStream): Promise<string> {
@@ -53,7 +59,28 @@ export class DogeCloud {
     return key
   }
 
-  deleteFile() {}
+  async deleteFile(key: string) {
+    const s3 = await this.initS3Client()
+
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: this.tmpToken?.Buckets[0].s3Bucket!,
+        Key: key
+      })
+    )
+  }
+
+  async allFiles() {
+    const s3 = await this.initS3Client()
+
+    const response = await s3.send(
+      new ListObjectsV2Command({
+        Bucket: this.tmpToken?.Buckets[0].s3Bucket!
+      })
+    )
+
+    return response.Contents?.map(item => item.Key) || []
+  }
 
   async initS3Client(): Promise<S3Client> {
     if (this.s3Client) {
@@ -61,6 +88,7 @@ export class DogeCloud {
     }
     const token = await this.getTmpToken()
     const s3 = new S3Client({
+      region: 'auto',
       endpoint: token.Buckets[0].s3Endpoint,
       credentials: {
         accessKeyId: token.Credentials.accessKeyId,
@@ -82,7 +110,7 @@ export class DogeCloud {
       '/auth/tmp_token.json',
       {
         channel: 'OSS_FULL',
-        scopes: ['*']
+        scopes: [`${this.bucket}:*`]
       },
       true
     )
