@@ -261,13 +261,9 @@ export class DogeCloudDeployer {
    */
   async deploy(options: DeployOptions): Promise<DeployResult> {
     const startTime = Date.now()
-    const {
-      localPath,
-      remotePath,
-      deleteRemoved = false,
-      maxConcurrency,
-      chunkSize
-    } = options
+    const { localPath, remotePath, maxConcurrency, chunkSize } = options
+
+    let deleteRemoved = options.deleteRemoved || false
 
     // 检查本地路径是否存在
     if (!fs.existsSync(localPath)) {
@@ -304,6 +300,20 @@ export class DogeCloudDeployer {
       `📁 发现 ${localFiles.length} 个文件需要上传，总大小: ${this.formatBytes(totalSize)}`
     )
 
+    // 如果启用删除远程文件，先获取远程文件列表（在上传之前）
+    let remoteFilesBeforeUpload: string[] = []
+    if (deleteRemoved) {
+      core.info(`🔍 获取远程文件列表（上传前）...`)
+      try {
+        remoteFilesBeforeUpload = await this.client.allFiles()
+        core.info(`📝 远程现有文件数量: ${remoteFilesBeforeUpload.length}`)
+      } catch (error) {
+        core.warning(`⚠️ 获取远程文件列表失败，跳过清理: ${error}`)
+        // 如果获取失败，为安全起见关闭删除功能
+        deleteRemoved = false
+      }
+    }
+
     // 并发上传文件
     core.info(
       `🚀 开始并发上传，最大并发数: ${maxConcurrency || this.maxConcurrency}`
@@ -315,17 +325,64 @@ export class DogeCloudDeployer {
 
     // 删除远程多余文件（如果启用）
     const failedDeletes: string[] = []
-    if (deleteRemoved) {
-      core.info(`🔍 检查需要删除的远程文件...`)
-      const remoteFiles = await this.client.allFiles()
-      const localRemotePaths = new Set(localFiles.map(f => f.remotePath))
+    if (deleteRemoved && remoteFilesBeforeUpload.length > 0) {
+      core.info(`�️ 开始清理远程多余文件...`)
 
-      const filesToDelete = remoteFiles.filter(
-        file => !localRemotePaths.has(file)
+      // 创建本地文件的远程路径集合，确保路径格式一致
+      const localRemotePaths = new Set(
+        localFiles.map(f => {
+          // 标准化路径格式，确保路径分隔符一致
+          let normalizedPath = f.remotePath.replace(/\\/g, '/')
+          // 确保路径格式与远程文件路径格式一致
+          if (!normalizedPath.startsWith('/') && remotePath.startsWith('/')) {
+            normalizedPath = '/' + normalizedPath
+          }
+          return normalizedPath
+        })
       )
+
+      // 标准化远程文件路径并过滤需要删除的文件
+      const filesToDelete = remoteFilesBeforeUpload.filter(remoteFile => {
+        // 标准化远程文件路径
+        let normalizedRemoteFile = remoteFile.replace(/\\/g, '/')
+
+        // 检查是否在本地文件列表中
+        const shouldKeep = localRemotePaths.has(normalizedRemoteFile)
+
+        if (!shouldKeep) {
+          core.info(`🗑️ 标记删除: ${remoteFile}`)
+        }
+
+        return !shouldKeep
+      })
+
+      // 输出调试信息
+      core.info(`📋 本地文件映射的远程路径 (${localRemotePaths.size} 个):`)
+      Array.from(localRemotePaths)
+        .slice(0, 5)
+        .forEach(path => core.info(`   - ${path}`))
+      if (localRemotePaths.size > 5) {
+        core.info(`   ... 还有 ${localRemotePaths.size - 5} 个文件`)
+      }
 
       if (filesToDelete.length > 0) {
         core.info(`🗑️ 需要删除 ${filesToDelete.length} 个远程文件`)
+
+        // 安全检查：避免删除过多文件
+        const deleteRatio =
+          filesToDelete.length / remoteFilesBeforeUpload.length
+        if (deleteRatio > 0.8) {
+          core.warning(
+            `⚠️ 警告：即将删除 ${Math.round(deleteRatio * 100)}% 的远程文件，这可能不安全`
+          )
+          core.warning(`如果确认要删除这些文件，请检查路径配置是否正确`)
+        }
+
+        filesToDelete.slice(0, 10).forEach(file => core.info(`   - ${file}`))
+        if (filesToDelete.length > 10) {
+          core.info(`   ... 还有 ${filesToDelete.length - 10} 个文件`)
+        }
+
         const deleteFailures =
           await this.deleteRemoteFilesConcurrently(filesToDelete)
         failedDeletes.push(...deleteFailures)
