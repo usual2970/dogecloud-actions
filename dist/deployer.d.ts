@@ -77,4 +77,5 @@ export declare class DogeCloudDeployer {
      * 格式化持续时间
      */
     private formatDuration;
+    private trimStartChars;
 }

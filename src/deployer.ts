@@ -344,7 +344,8 @@ export class DogeCloudDeployer {
       // 标准化远程文件路径并过滤需要删除的文件
       const filesToDelete = remoteFilesBeforeUpload.filter(remoteFile => {
         // 标准化远程文件路径
-        let normalizedRemoteFile = remoteFile.replace(/\\/g, '/')
+        let normalizedRemoteFile =
+          '/' + this.trimStartChars(remoteFile.replace(/\\/g, '/'), '/')
 
         // 检查是否在本地文件列表中
         const shouldKeep = localRemotePaths.has(normalizedRemoteFile)
@@ -443,5 +444,17 @@ export class DogeCloudDeployer {
     } else {
       return `${remainingSeconds}秒`
     }
+  }
+
+  // 只去除开头的指定字符
+  private trimStartChars(str: string, chars: string): string {
+    const charSet = new Set(chars.split(''))
+    let start = 0
+
+    while (start < str.length && charSet.has(str[start])) {
+      start++
+    }
+
+    return str.slice(start)
   }
 }

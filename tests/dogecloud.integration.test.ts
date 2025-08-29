@@ -88,6 +88,16 @@ describeIf(hasCredentials)('DogeCloud Integration Tests', () => {
       console.log('✅ S3 client initialized successfully')
     }, 10000)
 
+    it('should list all files in the bucket', async () => {
+      const files = await dogeCloud.allFiles()
+
+      expect(files).toBeDefined()
+      expect(Array.isArray(files)).toBe(true)
+      expect(files.length).toBeGreaterThan(0)
+
+      console.log('✅ Files listed successfully:', files)
+    }, 10000)
+
     it('should upload file to real S3 bucket', async () => {
       const fileStream = createReadStream(testFilePath)
       const uploadKey = `integration-test/${Date.now()}-${testFileName}`
