@@ -22,6 +22,10 @@ export declare class DogeCloud {
     private tokenExpireTime;
     constructor(accessKey: string, secretKey: string, bucket: string);
     uploadFile(key: string, file: ReadStream): Promise<string>;
+    /**
+     * 根据文件扩展名获取 Content-Type
+     */
+    private getContentType;
     deleteFile(key: string): Promise<void>;
     allFiles(): Promise<string[]>;
     initS3Client(): Promise<S3Client>;

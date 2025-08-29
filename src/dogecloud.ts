@@ -48,15 +48,45 @@ export class DogeCloud {
   async uploadFile(key: string, file: ReadStream): Promise<string> {
     const s3 = await this.initS3Client()
 
-    const resp = await s3.send(
-      new PutObjectCommand({
-        Bucket: this.tmpToken?.Buckets[0].s3Bucket!,
-        Key: key,
-        Body: file
-      })
-    )
+    // 创建上传命令，明确禁用校验和
+    const command = new PutObjectCommand({
+      Bucket: this.tmpToken?.Buckets[0].s3Bucket!,
+      Key: key,
+      Body: file,
+      ContentType: this.getContentType(key),
+      // 明确设置为 undefined 以避免自动校验和
+      ChecksumAlgorithm: undefined
+    })
 
+    const resp = await s3.send(command)
     return key
+  }
+
+  /**
+   * 根据文件扩展名获取 Content-Type
+   */
+  private getContentType(filename: string): string {
+    const ext = filename.toLowerCase().split('.').pop()
+    const mimeTypes: Record<string, string> = {
+      html: 'text/html',
+      css: 'text/css',
+      js: 'application/javascript',
+      json: 'application/json',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      svg: 'image/svg+xml',
+      ico: 'image/x-icon',
+      woff: 'font/woff',
+      woff2: 'font/woff2',
+      ttf: 'font/ttf',
+      eot: 'application/vnd.ms-fontobject',
+      pdf: 'application/pdf',
+      txt: 'text/plain',
+      xml: 'application/xml'
+    }
+    return mimeTypes[ext || ''] || 'application/octet-stream'
   }
 
   async deleteFile(key: string) {
@@ -87,6 +117,7 @@ export class DogeCloud {
       return this.s3Client
     }
     const token = await this.getTmpToken()
+
     const s3 = new S3Client({
       region: 'auto',
       endpoint: token.Buckets[0].s3Endpoint,
@@ -94,8 +125,41 @@ export class DogeCloud {
         accessKeyId: token.Credentials.accessKeyId,
         secretAccessKey: token.Credentials.secretAccessKey,
         sessionToken: token.Credentials.sessionToken
-      }
+      },
+      // 禁用路径样式访问
+      forcePathStyle: false,
+      // 设置用户代理
+      customUserAgent: 'dogecloud-actions/1.0',
+      // 禁用校验和配置
+      requestChecksumCalculation: 'NEVER' as any
     })
+
+    // 在客户端级别添加中间件来移除校验和头
+    s3.middlewareStack.add(
+      (next: any, context: any) => async (args: any) => {
+        if (args.request && args.request.headers) {
+          // 移除所有校验和相关的头信息
+          const headersToRemove = [
+            'x-amz-checksum-crc32',
+            'x-amz-checksum-crc32c',
+            'x-amz-checksum-sha1',
+            'x-amz-checksum-sha256',
+            'x-amz-content-sha256'
+          ]
+
+          headersToRemove.forEach(header => {
+            delete args.request.headers[header]
+          })
+        }
+        return next(args)
+      },
+      {
+        step: 'finalizeRequest',
+        name: 'removeChecksumHeaders',
+        priority: 'high'
+      }
+    )
+
     this.s3Client = s3
     return this.s3Client
   }
