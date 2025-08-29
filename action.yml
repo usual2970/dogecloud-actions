@@ -43,5 +43,5 @@ outputs:
   failed-files:
     description: 'Comma-separated list of failed file operations'
 runs:
-  using: 'node22'
+  using: 'node20'
   main: 'dist/index.js'
