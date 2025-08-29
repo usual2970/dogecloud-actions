@@ -6,7 +6,6 @@ export interface DogeCloudConfig {
     maxConcurrency?: number;
     retryAttempts?: number;
     retryDelay?: number;
-    urls: string[];
 }
 export interface DeployOptions {
     localPath: string;
@@ -43,6 +42,14 @@ export declare class DogeCloudDeployer {
     private readonly retryDelay;
     constructor(config: DogeCloudConfig);
     /**
+     * 生成API签名
+     */
+    private generateSignature;
+    /**
+     * 发送API请求
+     */
+    private apiRequest;
+    /**
      * 获取文件的MIME类型
      */
     private getMimeType;
@@ -63,6 +70,10 @@ export declare class DogeCloudDeployer {
      */
     private deleteRemoteFilesConcurrently;
     /**
+     * 获取远程文件列表
+     */
+    private getRemoteFiles;
+    /**
      * 删除远程文件
      */
     private deleteRemoteFile;
@@ -78,5 +89,5 @@ export declare class DogeCloudDeployer {
      * 格式化持续时间
      */
     private formatDuration;
-    private trimStartChars;
 }
+//# sourceMappingURL=deployer.d.ts.map

@@ -23,6 +23,7 @@ export declare class DogeCloud {
     uploadFile(key: string, file: Buffer, contentType?: string): Promise<string>;
     deleteFile(key: string): Promise<void>;
     allFiles(): Promise<string[]>;
+    refreshUrls(urls: string[]): Promise<void>;
     initS3Client(): Promise<S3Client>;
     getTmpToken(): Promise<DogeCloudS3TmpToken>;
     private dogecloudApi;

@@ -68212,6 +68212,12 @@ class DogeCloudDeployer {
                 core.info(`✅ 没有需要删除的远程文件`);
             }
         }
+        // 刷新自定义URL
+        if (this.config.urls && this.config.urls.length > 0) {
+            core.info(`🔄 刷新自定义 URL...`);
+            await this.client.refreshUrls(this.config.urls);
+            core.info(`✅ 自定义 URL 刷新请求已发送`);
+        }
         const duration = Date.now() - startTime;
         const uploadedFiles = localFiles.length - failedUploads.length;
         const allFailedFiles = [...failedUploads, ...failedDeletes];
@@ -68356,6 +68362,12 @@ class DogeCloud {
         }));
         return ((_b = response.Contents) === null || _b === void 0 ? void 0 : _b.map(item => item.Key).filter(Boolean)) || [];
     }
+    async refreshUrls(urls) {
+        await this.dogecloudApi('/cdn/refresh/add.json', {
+            rtype: 'path',
+            urls: JSON.stringify(urls)
+        }, true);
+    }
     async initS3Client() {
         if (this.s3Client) {
             return this.s3Client;
@@ -68471,6 +68483,11 @@ async function run() {
         const bucketName = core.getInput('bucket-name', { required: true });
         const localPath = core.getInput('local-path') || './dist';
         const remotePath = core.getInput('remote-path') || '/';
+        const inputUrls = core.getInput('urls') || '';
+        const urls = inputUrls
+            .split(',')
+            .map(u => u.trim())
+            .filter(u => u);
         const deleteRemoved = core.getInput('delete-removed') === 'true';
         const maxConcurrency = parseInt(core.getInput('max-concurrency') || '5', 10);
         const retryAttempts = parseInt(core.getInput('retry-attempts') || '3', 10);
@@ -68480,13 +68497,15 @@ async function run() {
         core.info(`🪣 存储桶: ${bucketName}`);
         core.info(`⚡ 最大并发数: ${maxConcurrency}`);
         core.info(`🔄 重试次数: ${retryAttempts}`);
+        core.info(`🔗 自定义 URL: ${urls.join(', ') || '无'}`);
         // 创建部署器实例
         const deployer = new deployer_1.DogeCloudDeployer({
             apiKey,
             secretKey,
             bucketName,
             maxConcurrency,
-            retryAttempts
+            retryAttempts,
+            urls
         });
         // 执行部署
         const result = await deployer.deploy({

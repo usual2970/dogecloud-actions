@@ -15,6 +15,10 @@ inputs:
     description: 'Local path to upload'
     required: false
     default: './dist'
+  urls:
+    description: 'Comma-separated list of custom URLs for deployment'
+    required: false
+    default: ''
   remote-path:
     description: 'Remote path in bucket'
     required: false

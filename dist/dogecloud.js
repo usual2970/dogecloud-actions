@@ -75,6 +75,12 @@ class DogeCloud {
         }));
         return ((_b = response.Contents) === null || _b === void 0 ? void 0 : _b.map(item => item.Key).filter(Boolean)) || [];
     }
+    async refreshUrls(urls) {
+        await this.dogecloudApi('/cdn/refresh/add.json', {
+            rtype: 'path',
+            urls: JSON.stringify(urls)
+        }, true);
+    }
     async initS3Client() {
         if (this.s3Client) {
             return this.s3Client;
