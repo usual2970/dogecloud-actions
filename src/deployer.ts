@@ -1,8 +1,7 @@
-import axios, { AxiosInstance } from 'axios'
-import * as crypto from 'crypto'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as core from '@actions/core'
+import { DogeCloud } from './dogecloud'
 
 export interface DogeCloudConfig {
   apiKey: string
@@ -46,7 +45,7 @@ export interface FileInfo {
 
 export class DogeCloudDeployer {
   private readonly config: DogeCloudConfig
-  private readonly client: AxiosInstance
+  private readonly client: DogeCloud
   private readonly endpoint: string
   private readonly maxConcurrency: number
   private readonly retryAttempts: number
@@ -59,56 +58,11 @@ export class DogeCloudDeployer {
     this.retryAttempts = config.retryAttempts || 3
     this.retryDelay = config.retryDelay || 1000
 
-    this.client = axios.create({
-      baseURL: this.endpoint,
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'dogecloud-actions/1.0.0'
-      }
-    })
-  }
-
-  /**
-   * 生成API签名
-   */
-  private generateSignature(data: any): string {
-    const timestamp = Math.floor(Date.now() / 1000)
-    const dataString = JSON.stringify(data)
-    const signString = `${this.config.apiKey}${dataString}${timestamp}${this.config.secretKey}`
-    const signature = crypto.createHash('sha1').update(signString).digest('hex')
-    return `${timestamp}.${signature}`
-  }
-
-  /**
-   * 发送API请求
-   */
-  private async apiRequest(action: string, data: any = {}): Promise<any> {
-    const requestData = {
-      ...data,
-      action,
-      api_key: this.config.apiKey
-    }
-
-    const signature = this.generateSignature(requestData)
-
-    try {
-      const response = await this.client.post('/api/v1/oss', {
-        ...requestData,
-        sign: signature
-      })
-
-      if (response.data.code !== 200) {
-        throw new Error(`API请求失败: ${response.data.msg || '未知错误'}`)
-      }
-
-      return response.data.data
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`网络请求失败: ${error.message}`)
-      }
-      throw error
-    }
+    this.client = new DogeCloud(
+      this.config.apiKey,
+      this.config.secretKey,
+      this.config.bucketName
+    )
   }
 
   /**
@@ -180,15 +134,9 @@ export class DogeCloudDeployer {
           `正在上传 (${attempt}/${this.retryAttempts}): ${file.remotePath}`
         )
 
-        const fileContent = await fs.promises.readFile(file.localPath)
-        const base64Content = fileContent.toString('base64')
-
-        await this.apiRequest('upload', {
-          bucket: this.config.bucketName,
-          key: file.remotePath,
-          content: base64Content,
-          content_type: file.mimeType
-        })
+        // 读取文件ReadStream并上传
+        const fileStream = fs.createReadStream(file.localPath)
+        await this.client.uploadFile(file.remotePath, fileStream)
 
         core.info(`✅ 上传成功: ${file.remotePath}`)
         return
@@ -300,30 +248,12 @@ export class DogeCloudDeployer {
   }
 
   /**
-   * 获取远程文件列表
-   */
-  private async getRemoteFiles(): Promise<string[]> {
-    try {
-      const result = await this.apiRequest('list', {
-        bucket: this.config.bucketName
-      })
-      return result.files || []
-    } catch (error) {
-      core.warning(`获取远程文件列表失败: ${error}`)
-      return []
-    }
-  }
-
-  /**
    * 删除远程文件
    */
   private async deleteRemoteFile(key: string): Promise<void> {
     core.info(`正在删除远程文件: ${key}`)
 
-    await this.apiRequest('delete', {
-      bucket: this.config.bucketName,
-      key
-    })
+    await this.client.deleteFile(key)
   }
 
   /**
@@ -387,7 +317,7 @@ export class DogeCloudDeployer {
     const failedDeletes: string[] = []
     if (deleteRemoved) {
       core.info(`🔍 检查需要删除的远程文件...`)
-      const remoteFiles = await this.getRemoteFiles()
+      const remoteFiles = await this.client.allFiles()
       const localRemotePaths = new Set(localFiles.map(f => f.remotePath))
 
       const filesToDelete = remoteFiles.filter(

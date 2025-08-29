@@ -70,7 +70,7 @@ export class DogeCloud {
     )
   }
 
-  async allFiles() {
+  async allFiles(): Promise<string[]> {
     const s3 = await this.initS3Client()
 
     const response = await s3.send(
@@ -79,7 +79,7 @@ export class DogeCloud {
       })
     )
 
-    return response.Contents?.map(item => item.Key) || []
+    return response.Contents?.map(item => item.Key!).filter(Boolean) || []
   }
 
   async initS3Client(): Promise<S3Client> {
