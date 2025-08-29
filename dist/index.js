@@ -68487,7 +68487,8 @@ async function run() {
         const urls = inputUrls
             .split(',')
             .map(u => u.trim())
-            .filter(u => u);
+            .filter(u => u)
+            .map(u => (u.endsWith('/') ? u : u + '/'));
         const deleteRemoved = core.getInput('delete-removed') === 'true';
         const maxConcurrency = parseInt(core.getInput('max-concurrency') || '5', 10);
         const retryAttempts = parseInt(core.getInput('retry-attempts') || '3', 10);

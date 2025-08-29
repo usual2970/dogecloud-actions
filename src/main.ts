@@ -14,7 +14,8 @@ async function run(): Promise<void> {
 		const urls = inputUrls
 			.split(',')
 			.map(u => u.trim())
-			.filter(u => u);
+			.filter(u => u)
+			.map(u => (u.endsWith('/') ? u : u + '/'));
 
 		const deleteRemoved = core.getInput('delete-removed') === 'true';
 		const maxConcurrency = parseInt(
