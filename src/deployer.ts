@@ -136,7 +136,7 @@ export class DogeCloudDeployer {
 
         // 读取文件ReadStream并上传
         const fileStream = fs.readFileSync(file.localPath)
-        await this.client.uploadFile(file.remotePath, fileStream)
+        await this.client.uploadFile(file.remotePath, fileStream, file.mimeType)
 
         core.info(`✅ 上传成功: ${file.remotePath}`)
         return

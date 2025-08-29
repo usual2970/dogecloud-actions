@@ -45,14 +45,19 @@ export class DogeCloud {
     private bucket: string
   ) {}
 
-  async uploadFile(key: string, file: Buffer): Promise<string> {
+  async uploadFile(
+    key: string,
+    file: Buffer,
+    contentType?: string
+  ): Promise<string> {
     const s3 = await this.initS3Client()
 
     const resp = await s3.send(
       new PutObjectCommand({
         Bucket: this.tmpToken?.Buckets[0].s3Bucket!,
         Key: key,
-        Body: file
+        Body: file,
+        ContentType: contentType || 'application/octet-stream'
       })
     )
 

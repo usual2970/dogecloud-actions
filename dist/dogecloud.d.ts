@@ -20,7 +20,7 @@ export declare class DogeCloud {
     private tmpToken?;
     private tokenExpireTime;
     constructor(accessKey: string, secretKey: string, bucket: string);
-    uploadFile(key: string, file: Buffer): Promise<string>;
+    uploadFile(key: string, file: Buffer, contentType?: string): Promise<string>;
     deleteFile(key: string): Promise<void>;
     allFiles(): Promise<string[]>;
     initS3Client(): Promise<S3Client>;

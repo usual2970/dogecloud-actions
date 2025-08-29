@@ -68007,7 +68007,7 @@ class DogeCloudDeployer {
                 core.info(`正在上传 (${attempt}/${this.retryAttempts}): ${file.remotePath}`);
                 // 读取文件ReadStream并上传
                 const fileStream = fs.readFileSync(file.localPath);
-                await this.client.uploadFile(file.remotePath, fileStream);
+                await this.client.uploadFile(file.remotePath, fileStream, file.mimeType);
                 core.info(`✅ 上传成功: ${file.remotePath}`);
                 return;
             }
@@ -68329,13 +68329,14 @@ class DogeCloud {
         this.bucket = bucket;
         this.tokenExpireTime = 0;
     }
-    async uploadFile(key, file) {
+    async uploadFile(key, file, contentType) {
         var _a;
         const s3 = await this.initS3Client();
         const resp = await s3.send(new client_s3_1.PutObjectCommand({
             Bucket: (_a = this.tmpToken) === null || _a === void 0 ? void 0 : _a.Buckets[0].s3Bucket,
             Key: key,
-            Body: file
+            Body: file,
+            ContentType: contentType || 'application/octet-stream'
         }));
         return key;
     }
