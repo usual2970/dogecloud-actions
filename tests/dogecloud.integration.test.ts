@@ -1,5 +1,5 @@
 import { DogeCloud } from '../src/dogecloud'
-import { createReadStream, writeFileSync, unlinkSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 
@@ -99,7 +99,7 @@ describeIf(hasCredentials)('DogeCloud Integration Tests', () => {
     }, 10000)
 
     it('should upload file to real S3 bucket', async () => {
-      const fileStream = createReadStream(testFilePath)
+      const fileStream = readFileSync(testFilePath)
       const uploadKey = `integration-test/${Date.now()}-${testFileName}`
 
       const result = await dogeCloud.uploadFile(uploadKey, fileStream)
@@ -135,7 +135,7 @@ describeIf(hasCredentials)('DogeCloud Integration Tests', () => {
       const fileCount = 3
 
       for (let i = 0; i < fileCount; i++) {
-        const fileStream = createReadStream(testFilePath)
+        const fileStream = readFileSync(testFilePath)
         const uploadKey = `integration-test/concurrent-${Date.now()}-${i}-${testFileName}`
         uploadPromises.push(dogeCloud.uploadFile(uploadKey, fileStream))
       }
@@ -206,7 +206,7 @@ describeIf(hasCredentials)('DogeCloud Integration Tests', () => {
       writeFileSync(largeFilePath, largeContent, 'utf8')
 
       try {
-        const fileStream = createReadStream(largeFilePath)
+        const fileStream = readFileSync(largeFilePath)
         const uploadKey = `integration-test/large-${Date.now()}-${largeFileName}`
 
         const startTime = Date.now()

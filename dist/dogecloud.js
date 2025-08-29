@@ -54,8 +54,7 @@ class DogeCloud {
         const resp = await s3.send(new client_s3_1.PutObjectCommand({
             Bucket: (_a = this.tmpToken) === null || _a === void 0 ? void 0 : _a.Buckets[0].s3Bucket,
             Key: key,
-            Body: file,
-            ChecksumAlgorithm: undefined
+            Body: file
         }));
         return key;
     }

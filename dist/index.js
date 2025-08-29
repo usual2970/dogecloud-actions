@@ -68006,7 +68006,7 @@ class DogeCloudDeployer {
             try {
                 core.info(`正在上传 (${attempt}/${this.retryAttempts}): ${file.remotePath}`);
                 // 读取文件ReadStream并上传
-                const fileStream = fs.createReadStream(file.localPath);
+                const fileStream = fs.readFileSync(file.localPath);
                 await this.client.uploadFile(file.remotePath, fileStream);
                 core.info(`✅ 上传成功: ${file.remotePath}`);
                 return;
@@ -68335,8 +68335,7 @@ class DogeCloud {
         const resp = await s3.send(new client_s3_1.PutObjectCommand({
             Bucket: (_a = this.tmpToken) === null || _a === void 0 ? void 0 : _a.Buckets[0].s3Bucket,
             Key: key,
-            Body: file,
-            ChecksumAlgorithm: undefined
+            Body: file
         }));
         return key;
     }

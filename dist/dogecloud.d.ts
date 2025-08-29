@@ -1,5 +1,4 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { ReadStream } from 'fs';
 type DogeCloudS3TmpToken = {
     Credentials: {
         accessKeyId: string;
@@ -21,7 +20,7 @@ export declare class DogeCloud {
     private tmpToken?;
     private tokenExpireTime;
     constructor(accessKey: string, secretKey: string, bucket: string);
-    uploadFile(key: string, file: ReadStream): Promise<string>;
+    uploadFile(key: string, file: Buffer): Promise<string>;
     deleteFile(key: string): Promise<void>;
     allFiles(): Promise<string[]>;
     initS3Client(): Promise<S3Client>;
